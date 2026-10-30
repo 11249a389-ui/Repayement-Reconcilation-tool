@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vastu Housing Finance — Repayment Reconciliation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#F6F7F5; --surface:#FFFFFF; --surface-2:#EFF2EF; --text:#12241E; --muted:#5B6C64;
+    --border:#DCE3DD; --accent:#1E5B4F; --accent-2:#3E8E7E;
+    --success-bg:#E4F3EC; --success-fg:#1B7A4D; --success-bd:#B8E0C9;
+    --warn-bg:#FBF1DE; --warn-fg:#8A5A00; --warn-bd:#EFD6A0;
+    --danger-bg:#FBEAE8; --danger-fg:#B03A2E; --danger-bd:#F1C3BC;
+    --neutral-bg:#EDEEF3; --neutral-fg:#4A4F63; --neutral-bd:#D3D6E2;
+    --shadow: 0 1px 3px rgba(18,36,30,0.08), 0 6px 20px rgba(18,36,30,0.05);
+    color-scheme: light;
+  }
+  [data-theme="dark"]{
+    --bg:#0E1613; --surface:#161F1B; --surface-2:#1C2622; --text:#EAF1EC; --muted:#95A69D;
+    --border:#2A3630; --accent:#5FBFA6; --accent-2:#3E8E7E;
+    --success-bg:#153327; --success-fg:#7FD9AA; --success-bd:#22503C;
+    --warn-bg:#332A12; --warn-fg:#E8C46B; --warn-bd:#4D3E17;
+    --danger-bg:#341C19; --danger-fg:#F0968A; --danger-bd:#552823;
+    --neutral-bg:#1E2130; --neutral-fg:#B7BCD6; --neutral-bd:#30364A;
+    color-scheme: dark;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--text); font-family:"IBM Plex Sans",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+  .page{ max-width:1160px; margin:0 auto; padding:24px 20px 80px; }
+  h1,h2,h3{ font-family:"Space Grotesk",sans-serif; letter-spacing:-0.01em; }
+  .mono{ font-family:"IBM Plex Mono",monospace; }
+  .navbar{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border); margin-bottom:28px; gap:12px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-logo{ width:38px; height:38px; background:var(--accent); color:#fff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; font-family:"Space Grotesk"; flex-shrink:0; }
+  .brand-title{ font-size:17px; font-weight:700; font-family:"Space Grotesk"; }
+  .brand-sub{ font-size:12px; color:var(--muted); }
+  .nav-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .user-pill{ display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); padding:6px 14px; border-radius:20px; font-size:13px; }
+  .role-tag{ font-size:11px; font-weight:600; padding:2px 8px; border-radius:12px; background:var(--success-bg); color:var(--accent); border:1px solid var(--success-bd); }
+  button, .btn{ font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border-radius:9px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); padding:7px 14px; transition:all .15s; }
+  button:hover{ border-color:var(--accent-2); background:var(--surface); }
+  .btn-primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover{ background:var(--accent-2); border-color:var(--accent-2); }
+  .btn-sm{ padding:5px 10px; font-size:12px; }
+  .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter:blur(5px); }
+  .login-card{ background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:36px; width:100%; max-width:430px; box-shadow:var(--shadow); }
+  .form-group{ margin-bottom:16px; }
+  .form-group label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--muted); }
+  .form-control{ width:100%; padding:10px 14px; border-radius:9px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; outline:none; font-family:inherit; }
+  .form-control:focus{ border-color:var(--accent-2); box-shadow:0 0 0 3px rgba(62,142,126,0.15); }
+  .login-divider{ text-align:center; font-size:12px; color:var(--muted); margin:14px 0; }
+  .demo-btns{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
+  .demo-btn{ font-size:12px; padding:8px 6px; border-radius:8px; text-align:center; }
+  .hero{ padding:8px 0 24px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  .hero-label{ font-size:12px; color:var(--accent-2); font-weight:600; margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em; }
+  .hero h1{ font-size:clamp(24px,3.5vw,34px); font-weight:700; line-height:1.15; }
+  .hero .tagline{ margin-top:10px; max-width:720px; color:var(--muted); font-size:15px; line-height:1.55; }
+  .stack-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .stack-pill{ font-size:11.5px; font-family:"IBM Plex Mono",monospace; padding:4px 12px; border-radius:20px; border:1px solid var(--border); color:var(--muted); background:var(--surface); }
+  .stack-pill.active{ color:var(--accent); border-color:var(--accent-2); background:var(--success-bg); }
+  .tabs{ display:flex; gap:4px; border-bottom:2px solid var(--border); margin-bottom:24px; flex-wrap:wrap; }
+  .tab-btn{ font-size:13px; font-weight:600; padding:10px 18px; border:none; background:transparent; color:var(--muted); border-radius:0; border-bottom:2px solid transparent; margin-bottom:-2px; cursor:pointer; }
+  .tab-btn:hover{ color:var(--text); }
+  .tab-btn.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-pane{ display:none; }
+  .tab-pane.active{ display:block; }
+  .inputs{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:22px; }
+  @media(max-width:760px){ .inputs{ grid-template-columns:1fr; } }
+  .data-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px; }
+  .data-card-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .data-card-head h2{ font-size:15px; font-weight:600; }
+  .data-card-sub{ font-size:12.5px; color:var(--muted); }
+  .card-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  textarea{ width:100%; min-height:160px; resize:vertical; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:12px; font-family:"IBM Plex Mono",monospace; font-size:12px; line-height:1.6; outline:none; }
+  textarea:focus{ border-color:var(--accent-2); }
+  .hint{ font-size:11.5px; color:var(--muted); }
+  .drop-zone{ border:2px dashed var(--border); border-radius:12px; padding:28px; text-align:center; cursor:pointer; transition:all .2s; color:var(--muted); }
+  .drop-zone:hover, .drop-zone.drag-over{ border-color:var(--accent-2); background:var(--success-bg); color:var(--accent); }
+  .drop-zone .dz-icon{ font-size:32px; display:block; margin-bottom:8px; }
+  .drop-zone .dz-text{ font-size:13px; font-weight:600; }
+  .drop-zone .dz-sub{ font-size:11.5px; margin-top:4px; }
+  .file-info{ font-size:12px; color:var(--accent); font-weight:600; margin-top:6px; }
+  .run-row{ display:flex; align-items:center; gap:14px; margin-bottom:28px; flex-wrap:wrap; }
+  #runBtn{ background:var(--accent); border-color:var(--accent); color:#fff; padding:11px 28px; font-size:14px; border-radius:10px; }
+  #runBtn:disabled{ opacity:0.55; cursor:not-allowed; }
+  #runStatus{ font-size:13px; color:var(--muted); }
+  .spinner{ display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+  .summary-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:24px; }
+  @media(max-width:900px){ .summary-grid{ grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:520px){ .summary-grid{ grid-template-columns:repeat(2,1fr); } }
+  .summary-card{ border-radius:12px; padding:14px; border:1px solid var(--border); background:var(--surface); }
+  .summary-card .num{ font-family:"Space Grotesk",sans-serif; font-size:26px; font-weight:700; }
+  .summary-card .lbl{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.3; }
+  .summary-card.matched{ border-color:var(--success-bd); background:var(--success-bg); }
+  .summary-card.matched .num{ color:var(--success-fg); }
+  .summary-card.exception{ border-color:var(--danger-bd); background:var(--danger-bg); }
+  .summary-card.exception .num{ color:var(--danger-fg); }
+  .charts-row{ display:grid; grid-template-columns:1fr 2fr; gap:20px; margin-bottom:24px; }
+  @media(max-width:760px){ .charts-row{ grid-template-columns:1fr; } }
+  .chart-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:var(--shadow); }
+  .chart-card h3{ font-size:14px; font-weight:600; margin-bottom:14px; }
+  .results-panel{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:var(--shadow); }
+  .results-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .results-head h2{ font-size:15px; font-weight:600; }
+  .filter-row{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .filter-btn{ font-size:12px; padding:5px 11px; border-radius:8px; }
+  .filter-btn.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .search-box{ width:100%; padding:9px 14px; border-radius:9px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; outline:none; font-family:inherit; margin-bottom:12px; }
+  .search-box:focus{ border-color:var(--accent-2); }
+  .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; min-width:780px; }
+  thead th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600; padding:10px 12px; background:var(--surface-2); white-space:nowrap; }
+  tbody td{ padding:10px 12px; border-top:1px solid var(--border); vertical-align:middle; }
+  tbody tr:hover{ background:var(--surface-2); }
+  .ref{ font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:12px; }
+  .badge{ display:inline-block; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; border:1px solid; white-space:nowrap; }
+  .badge.matched{ color:var(--success-fg); background:var(--success-bg); border-color:var(--success-bd); }
+  .badge.amount_mismatch{ color:var(--warn-fg); background:var(--warn-bg); border-color:var(--warn-bd); }
+  .badge.date_mismatch{ color:#5A4B00; background:#FFF8DC; border-color:#E8D080; }
+  .badge.missing_in_ledger, .badge.missing_in_payment{ color:var(--danger-fg); background:var(--danger-bg); border-color:var(--danger-bd); }
+  .badge.duplicate{ color:var(--neutral-fg); background:var(--neutral-bg); border-color:var(--neutral-bd); }
+  .note-cell{ color:var(--muted); font-size:12px; max-width:260px; }
+  .empty-state{ text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
+  .override-modal{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:999; }
+  .override-card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:26px; width:100%; max-width:480px; box-shadow:var(--shadow); }
+  .toast{ position:fixed; bottom:28px; right:28px; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:9999; opacity:0; transition:opacity .3s; max-width:340px; }
+  .toast.show{ opacity:1; }
+  .toast.success{ background:var(--success-bg); color:var(--success-fg); border:1px solid var(--success-bd); }
+  .toast.error{ background:var(--danger-bg); color:var(--danger-fg); border:1px solid var(--danger-bd); }
+  .history-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .history-table th{ text-align:left; font-size:11px; text-transform:uppercase; padding:8px 10px; background:var(--surface-2); color:var(--muted); }
+  .history-table td{ padding:8px 10px; border-top:1px solid var(--border); }
+  footer{ margin-top:40px; font-size:12px; color:var(--muted); text-align:center; padding-top:24px; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+      <div class="brand-logo">V</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;font-family:'Space Grotesk'">Vastu Housing Finance</div>
+        <div style="font-size:12px;color:var(--muted)">Repayment Reconciliation Platform</div>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">Quick demo login:</div>
+    <div class="demo-btns">
+      <button class="demo-btn" onclick="setLogin('admin','admin123')">Admin</button>
+      <button class="demo-btn" onclick="setLogin('ops','ops123')">Ops Mgr</button>
+      <button class="demo-btn" onclick="setLogin('auditor','audit123')">Auditor</button>
+    </div>
+    <div class="login-divider">— or enter credentials manually —</div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" class="form-control" value="admin" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" class="form-control" value="admin123" required>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;padding:12px;font-size:14px;border-radius:10px;">Sign In</button>
+    </form>
+    <div id="loginError" style="color:var(--danger-fg);font-size:13px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<div class="page" id="mainContent" style="display:none;">
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-logo">V</div>
+      <div>
+        <div class="brand-title">Vastu Housing Finance Limited</div>
+        <div class="brand-sub">Core Banking &amp; Loan Repayment Reconciliation System</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button onclick="toggleTheme()">Theme</button>
+      <div class="user-pill">
+        <span id="userFullName">User</span>
+        <span class="role-tag" id="userRoleTag">Role</span>
+        <button onclick="logout()" style="padding:3px 8px;font-size:11px;border-radius:6px;">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-label">Vastu Housing Finance — v2.1 Production Engine</div>
+    <h1>Automated Repayment Reconciliation</h1>
+    <p class="tagline">Matches multi-channel payment gateway settlements and bank statement credits against the Core LMS ledger using a waterfall rule engine.</p>
+    <div class="stack-row">
+      <span class="stack-pill active">1. Import &amp; Validate</span>
+      <span class="stack-pill active">2. Waterfall Matching</span>
+      <span class="stack-pill active">3. Exception Classification</span>
+      <span class="stack-pill active">4. Manual Workbench</span>
+      <span class="stack-pill active">5. Exception CSV Export</span>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('reconcile',this)">Reconcile</button>
+    <button class="tab-btn" onclick="switchTab('results',this)" id="resultsTabBtn">Results</button>
+    <button class="tab-btn" onclick="switchTab('history',this)">Run History</button>
+    <button class="tab-btn" onclick="switchTab('help',this)">Help</button>
+  </div>
+
+  <div class="tab-pane active" id="tab-reconcile">
+    <div style="display:flex;gap:8px;margin-bottom:18px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:600;color:var(--muted);">Input mode:</span>
+      <button id="modePaste" class="btn-primary btn-sm" onclick="setMode('paste')">Paste CSV</button>
+      <button id="modeFile" class="btn-sm" onclick="setMode('file')">Upload Files</button>
+      <a href="/api/sample/payment" style="font-size:12px;color:var(--accent);margin-left:8px;">Download Sample Payment CSV</a>
+      <a href="/api/sample/ledger" style="font-size:12px;color:var(--accent);margin-left:4px;">Download Sample Ledger CSV</a>
+    </div>
+
+    <div id="pasteMode">
+      <div class="inputs">
+        <div class="data-card">
+          <div class="data-card-head">
+            <h2>Payment File / Bank MIS</h2>
+            <div class="card-actions">
+              <button onclick="loadSample('payment')">Load sample</button>
+              <button onclick="clearArea('paymentData')">Clear</button>
+            </div>
+          </div>
+          <div class="data-card-sub">Bank statement credits &amp; Payment Gateway settlement entries.</div>
+          <textarea id="paymentData" spellcheck="false" placeholder="Paste CSV here..."></textarea>
+          <div class="hint">Columns: <span class="mono">reference_id, account_id, amount, payment_date</span></div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-head">
+            <h2>LMS Demand Ledger</h2>
+            <div class="card-actions">
+              <button onclick="loadSample('ledger')">Load sample</button>
+              <button onclick="clearArea('ledgerData')">Clear</button>
+            </div>
+          </div>
+          <div class="data-card-sub">Expected loan repayment schedule from Core Banking System.</div>
+          <textarea id="ledgerData" spellcheck="false" placeholder="Paste CSV here..."></textarea>
+          <div class="hint">Columns: <span class="mono">reference_id, account_id, amount, due_date</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="uploadMode" style="display:none;">
+      <div class="inputs">
+        <div class="data-card">
+          <div class="data-card-head"><h2>Payment File (CSV)</h2></div>
+          <div class="data-card-sub">Upload your bank statement or payment gateway CSV file.</div>
+          <div class="drop-zone" id="payDrop" onclick="document.getElementById('payFile').click()">
+            <span class="dz-icon">&#128196;</span>
+            <div class="dz-text">Click or drag CSV here</div>
+            <div class="dz-sub">payment_date column required</div>
+          </div>
+          <input type="file" id="payFile" accept=".csv" style="display:none" onchange="handleFile(this,'payDrop','payFileName')">
+          <div class="file-info" id="payFileName"></div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-head"><h2>Ledger File (CSV)</h2></div>
+          <div class="data-card-sub">Upload your LMS demand ledger CSV file.</div>
+          <div class="drop-zone" id="ledDrop" onclick="document.getElementById('ledFile').click()">
+            <span class="dz-icon">&#128209;</span>
+            <div class="dz-text">Click or drag CSV here</div>
+            <div class="dz-sub">due_date column required</div>
+          </div>
+          <input type="file" id="ledFile" accept=".csv" style="display:none" onchange="handleFile(this,'ledDrop','ledFileName')">
+          <div class="file-info" id="ledFileName"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="run-row">
+      <button id="runBtn" onclick="runReconciliation()">Run Waterfall Reconciliation</button>
+      <span id="runStatus">Load data above and click Run.</span>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-results">
+    <div id="noResults" class="empty-state">
+      <div style="font-size:36px;margin-bottom:12px;">&#128429;</div>
+      <div>No results yet. Run a reconciliation on the Reconcile tab.</div>
+    </div>
+    <div id="resultsContent" style="display:none;">
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Status Breakdown</h3>
+          <canvas id="statusChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Exception Categories</h3>
+          <canvas id="barChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="results-panel">
+        <div class="results-head">
+          <h2>Reconciliation Detail Workbench</h2>
+          <button onclick="exportCSV()">Export Exception CSV</button>
+        </div>
+        <div class="filter-row" id="filterRow"></div>
+        <input type="text" class="search-box" id="searchBox" placeholder="Search by Reference ID, Account ID or Note..." oninput="renderTable()">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Reference ID</th><th>Loan Account</th><th>Payment Amt</th>
+                <th>Ledger Amt</th><th>Payment Date</th><th>Ledger Date</th>
+                <th>Status</th><th>Note</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted);" id="rowCount"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-history">
+    <div class="results-panel">
+      <div class="results-head">
+        <h2>Reconciliation Run History</h2>
+        <button onclick="loadHistory()">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="history-table">
+          <thead><tr><th>#</th><th>Date &amp; Time</th><th>Run By</th><th>Total</th><th>Matched</th><th>Exceptions</th><th>Match Rate</th></tr></thead>
+          <tbody id="historyBody"><tr><td colspan="7" class="empty-state">Click Refresh to load history.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane" id="tab-help">
+    <div class="results-panel" style="max-width:760px;">
+      <h2 style="margin-bottom:18px;">How to Use This System</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;"><strong>Payment file columns:</strong> reference_id, account_id, amount, payment_date</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;"><strong>Ledger file columns:</strong> reference_id, account_id, amount, due_date</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Paste CSV or upload files, then click Run Waterfall Reconciliation.</p>
+      <h3 style="font-size:14px;margin-bottom:8px;">Demo Login</h3>
+      <div style="font-size:13px;color:var(--muted);">
+        <div><strong>admin</strong> / admin123 — Finance Director</div>
+        <div><strong>ops</strong> / ops123 — Reconciliation Manager</div>
+        <div><strong>auditor</strong> / audit123 — Internal Auditor</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Vastu Housing Finance Limited — Repayment Reconciliation System v2.1 &nbsp;·&nbsp; <a href="/health" style="color:var(--muted);">Health</a> &nbsp;·&nbsp; <a href="/docs" style="color:var(--muted);">API Docs</a></footer>
+</div>
+
+<div class="override-modal" id="overrideModal">
+  <div class="override-card">
+    <h3 style="margin-bottom:12px;">Manual Reconciliation &amp; Link</h3>
+    <div class="form-group"><label>Reference ID</label><input type="text" id="overrideRef" class="form-control" readonly></div>
+    <div class="form-group"><label>Target Loan Account</label><input type="text" id="overrideAcc" class="form-control" placeholder="e.g. ACC2006"></div>
+    <div class="form-group"><label>Remarks</label><input type="text" id="overrideNotes" class="form-control" value="Verified customer bank deposit receipt"></div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button onclick="closeOverrideModal()" style="flex:1;">Cancel</button>
+      <button onclick="submitManualMatch()" class="btn-primary" style="flex:1;">Post Manual Link</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PAYMENT_SAMPLE = `reference_id,account_id,amount,payment_date
+TXN1001,ACC2001,18500,2026-09-05
+TXN1002,ACC2002,9750,2026-09-05
+TXN1003,ACC2003,15000,2026-09-06
+TXN1004,ACC2004,22300,2026-09-08
+TXN1005,ACC2005,11200,2026-09-06
+TXN1006,ACC2099,7600,2026-09-07
+TXN1008,ACC2008,13400,2026-09-07
+TXN1008,ACC2008,13400,2026-09-07
+TXN1009,ACC2009,16800,2026-09-09
+TXN1010,ACC2010,20100,2026-09-09`;
+
+const LEDGER_SAMPLE = `reference_id,account_id,amount,due_date
+TXN1001,ACC2001,18500,2026-09-05
+TXN1002,ACC2002,9750,2026-09-05
+TXN1003,ACC2003,15500,2026-09-06
+TXN1004,ACC2004,22300,2026-09-07
+TXN1005,ACC2005,11200,2026-09-06
+TXN1007,ACC2007,9800,2026-09-07
+TXN1008,ACC2008,13400,2026-09-07
+TXN1009,ACC2009,16800,2026-09-09
+TXN1010,ACC2010,20100,2026-09-09`;
+
+const STATUS_LABEL = {
+  matched:'Matched', amount_mismatch:'Amount Mismatch', date_mismatch:'Date Mismatch',
+  missing_in_ledger:'Missing in Ledger', missing_in_payment:'Missing in Payment', duplicate:'Duplicate'
+};
+
+let authToken = localStorage.getItem('vastu_token');
+let currentResults = [], currentFilter = 'all', inputMode = 'paste';
+let payFileObj = null, ledFileObj = null, doughnutChart = null, barChartObj = null;
+
+function setLogin(u,p){ document.getElementById('loginUser').value=u; document.getElementById('loginPass').value=p; }
+
+document.getElementById('loginForm').onsubmit = async(e) => {
+  e.preventDefault();
+  const u=document.getElementById('loginUser').value.trim(), p=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginError'); errEl.style.display='none';
+  try {
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    if(!res.ok){const err=await res.json(); errEl.textContent=err.detail||'Login failed'; errEl.style.display='block'; return;}
+    const data=await res.json();
+    localStorage.setItem('vastu_token',data.access_token); localStorage.setItem('vastu_user',JSON.stringify(data));
+    showMainApp(data);
+  } catch(err){ errEl.textContent='Cannot connect to server.'; errEl.style.display='block'; }
+};
+
+function showMainApp(user){
+  document.getElementById('loginOverlay').style.display='none';
+  document.getElementById('mainContent').style.display='block';
+  document.getElementById('userFullName').textContent=user.full_name||user.name||user.username;
+  document.getElementById('userRoleTag').textContent=user.role||'User';
+  loadSample('payment'); loadSample('ledger');
+}
+
+function logout(){ localStorage.removeItem('vastu_token'); localStorage.removeItem('vastu_user'); location.reload(); }
+
+if(authToken){ const user=JSON.parse(localStorage.getItem('vastu_user')||'{}'); if(user&&user.full_name) showMainApp(user); }
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active'); btn.classList.add('active');
+  if(name==='history') loadHistory();
+}
+
+function setMode(mode){
+  inputMode=mode;
+  document.getElementById('pasteMode').style.display=mode==='paste'?'':'none';
+  document.getElementById('uploadMode').style.display=mode==='file'?'':'none';
+  document.getElementById('modePaste').className=mode==='paste'?'btn-primary btn-sm':'btn-sm';
+  document.getElementById('modeFile').className=mode==='file'?'btn-primary btn-sm':'btn-sm';
+}
+
+function loadSample(type){ if(type==='payment') document.getElementById('paymentData').value=PAYMENT_SAMPLE; else document.getElementById('ledgerData').value=LEDGER_SAMPLE; }
+function clearArea(id){ document.getElementById(id).value=''; }
+
+function handleFile(input,dropId,labelId){
+  const file=input.files[0]; if(!file) return;
+  if(dropId==='payDrop') payFileObj=file; else ledFileObj=file;
+  document.getElementById(labelId).textContent='OK: '+file.name+' ('+(file.size/1024).toFixed(1)+' KB)';
+  const drop=document.getElementById(dropId); drop.style.borderColor='var(--accent-2)'; drop.style.background='var(--success-bg)';
+}
+
+['payDrop','ledDrop'].forEach(id=>{
+  const el=document.getElementById(id); if(!el) return;
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+  el.addEventListener('drop',e=>{
+    e.preventDefault(); el.classList.remove('drag-over');
+    const file=e.dataTransfer.files[0]; if(!file) return;
+    const labelId=id==='payDrop'?'payFileName':'ledFileName';
+    if(id==='payDrop') payFileObj=file; else ledFileObj=file;
+    document.getElementById(labelId).textContent='OK: '+file.name;
+    el.style.borderColor='var(--accent-2)'; el.style.background='var(--success-bg)';
+  });
+});
+
+async function runReconciliation(){
+  const btn=document.getElementById('runBtn'), statusEl=document.getElementById('runStatus');
+  const token=localStorage.getItem('vastu_token');
+  if(!token){ showToast('Please log in first.','error'); return; }
+  btn.disabled=true; statusEl.innerHTML='<span class="spinner"></span>Running...';
+  try {
+    let res;
+    if(inputMode==='file'){
+      if(!payFileObj||!ledFileObj){ statusEl.textContent='Please select both CSV files.'; btn.disabled=false; return; }
+      const fd=new FormData(); fd.append('payment_file',payFileObj); fd.append('ledger_file',ledFileObj);
+      res=await fetch('/api/reconcile-upload',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    } else {
+      const payCsv=document.getElementById('paymentData').value.trim();
+      const ledgCsv=document.getElementById('ledgerData').value.trim();
+      if(!payCsv||!ledgCsv){ statusEl.textContent='Please paste data in both fields.'; btn.disabled=false; return; }
+      res=await fetch('/api/reconcile',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({payment_csv:payCsv,ledger_csv:ledgCsv})});
+    }
+    if(!res.ok){ const err=await res.json().catch(()=>({})); statusEl.textContent='Error: '+(err.detail||res.status); btn.disabled=false; return; }
+    const data=await res.json();
+    currentResults=data.results; currentFilter='all';
+    renderSummary(data.summary); renderFilters(currentResults); renderTable(); renderCharts(data.summary);
+    document.getElementById('noResults').style.display='none'; document.getElementById('resultsContent').style.display='block';
+    const s=data.summary;
+    statusEl.innerHTML='Done - <strong>'+s.total+'</strong> records, <strong>'+s.exceptions+'</strong> exceptions | Rate: <strong>'+s.auto_match_rate+'%</strong>';
+    showToast('Reconciliation complete - '+s.total+' records','success');
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-results').classList.add('active'); document.getElementById('resultsTabBtn').classList.add('active');
+  } catch(err){ statusEl.textContent='Failed to connect to backend. Is the server running?'; }
+  btn.disabled=false;
+}
+
+function renderSummary(s){
+  const cards=[{label:'Total Records',value:s.total,cls:''},{label:'Matched',value:s.matched,cls:'matched'},{label:'Exceptions',value:s.exceptions,cls:'exception'},{label:'Amount Mismatch',value:s.amount_mismatch,cls:'exception'},{label:'Missing in Ledger',value:s.missing_in_ledger,cls:'exception'},{label:'Missing in Payment',value:s.missing_in_payment,cls:'exception'}];
+  document.getElementById('summaryGrid').innerHTML=cards.map(c=>'<div class="summary-card '+c.cls+'"><div class="num">'+c.value+'</div><div class="lbl">'+c.label+'</div></div>').join('');
+}
+
+function renderCharts(s){
+  const labels=['Matched','Amount Mismatch','Date Mismatch','Missing in Ledger','Missing in Payment','Duplicate'];
+  const values=[s.matched,s.amount_mismatch,s.date_mismatch,s.missing_in_ledger,s.missing_in_payment,s.duplicate];
+  const colors=['#1B7A4D','#D97706','#CA8A04','#B91C1C','#DC2626','#6B7280'];
+  if(doughnutChart) doughnutChart.destroy();
+  doughnutChart=new Chart(document.getElementById('statusChart').getContext('2d'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:14}}}}});
+  const bvals=[s.amount_mismatch,s.date_mismatch,s.missing_in_ledger,s.missing_in_payment,s.duplicate];
+  if(barChartObj) barChartObj.destroy();
+  barChartObj=new Chart(document.getElementById('barChart').getContext('2d'),{type:'bar',data:{labels:['Amount Mismatch','Date Mismatch','Missing in Ledger','Missing in Payment','Duplicate'],datasets:[{label:'Count',data:bvals,backgroundColor:['#D97706','#CA8A04','#B91C1C','#DC2626','#6B7280']}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+
+function renderFilters(results){
+  const statuses=['all','matched','amount_mismatch','date_mismatch','missing_in_ledger','missing_in_payment','duplicate'];
+  document.getElementById('filterRow').innerHTML=statuses.map(s=>{
+    const label=s==='all'?'All':STATUS_LABEL[s];
+    const count=s==='all'?results.length:results.filter(r=>r.status===s).length;
+    return '<button class="filter-btn'+(s===currentFilter?' active':'')+'" onclick="applyFilter(\''+s+'\')">'+label+' ('+count+')</button>';
+  }).join('');
+}
+
+function applyFilter(s){ currentFilter=s; renderFilters(currentResults); renderTable(); }
+
+function renderTable(){
+  const body=document.getElementById('resultsBody');
+  const search=(document.getElementById('searchBox').value||'').toLowerCase();
+  let rows=currentFilter==='all'?currentResults:currentResults.filter(r=>r.status===currentFilter);
+  if(search) rows=rows.filter(r=>(r.reference_id||'').toLowerCase().includes(search)||(r.account_id||'').toLowerCase().includes(search)||(r.note||'').toLowerCase().includes(search));
+  document.getElementById('rowCount').textContent='Showing '+rows.length+' record(s)';
+  if(!rows.length){ body.innerHTML='<tr><td colspan="9" class="empty-state">No records match this filter.</td></tr>'; return; }
+  body.innerHTML=rows.map(r=>'<tr><td class="ref">'+r.reference_id+'</td><td>'+(r.account_id||'&mdash;')+'</td><td class="mono">'+(r.pay_amount?inr(r.pay_amount):'&mdash;')+'</td><td class="mono">'+(r.ledger_amount?inr(r.ledger_amount):'&mdash;')+'</td><td class="mono">'+(r.pay_date||'&mdash;')+'</td><td class="mono">'+(r.ledger_date||'&mdash;')+'</td><td><span class="badge '+r.status+'">'+(STATUS_LABEL[r.status]||r.status)+'</span></td><td class="note-cell">'+r.note+'</td><td>'+(r.status!=='matched'?'<button class="btn-sm" onclick="openOverrideModal(\''+r.reference_id+'\',\''+(r.account_id||'')+'\')">Link</button>':'&mdash;')+'</td></tr>').join('');
+}
+
+function inr(v){ const n=parseFloat(v); if(isNaN(n)) return v; return 'Rs.'+n.toLocaleString('en-IN'); }
+
+function exportCSV(){
+  const header='reference_id,account_id,payment_amount,ledger_amount,payment_date,ledger_date,status,note';
+  const rows=currentResults.map(r=>[r.reference_id,r.account_id,r.pay_amount,r.ledger_amount,r.pay_date,r.ledger_date,STATUS_LABEL[r.status]||r.status,'"'+(r.note||'').replace(/"/g,'""')+'"'].join(','));
+  const csv=[header,...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='Vastu_Report_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('CSV exported!','success');
+}
+
+function openOverrideModal(ref,acc){ document.getElementById('overrideRef').value=ref; document.getElementById('overrideAcc').value=acc!=='—'?acc:''; document.getElementById('overrideModal').style.display='flex'; }
+function closeOverrideModal(){ document.getElementById('overrideModal').style.display='none'; }
+
+async function submitManualMatch(){
+  const ref=document.getElementById('overrideRef').value, acc=document.getElementById('overrideAcc').value.trim(), notes=document.getElementById('overrideNotes').value.trim();
+  const token=localStorage.getItem('vastu_token');
+  if(!acc){ showToast('Please enter an account number.','error'); return; }
+  try {
+    const res=await fetch('/api/manual-match',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({reference_id:ref,account_id:acc,notes})});
+    if(res.ok){ showToast(ref+' linked to '+acc,'success'); closeOverrideModal(); const t=currentResults.find(r=>r.reference_id===ref); if(t){t.status='matched';t.note='Manually linked to '+acc+': '+notes;} renderTable(); }
+    else showToast('Error submitting.','error');
+  } catch(e){ showToast('Connection error.','error'); }
+}
+
+async function loadHistory(){
+  const token=localStorage.getItem('vastu_token');
+  try {
+    const res=await fetch('/api/history',{headers:{'Authorization':'Bearer '+token}});
+    const logs=await res.json();
+    const body=document.getElementById('historyBody');
+    if(!logs.length){ body.innerHTML='<tr><td colspan="7" class="empty-state">No runs yet.</td></tr>'; return; }
+    body.innerHTML=logs.map(l=>'<tr><td>'+l.id+'</td><td class="mono" style="font-size:12px">'+l.timestamp+'</td><td>'+l.run_by+'</td><td>'+l.total_records+'</td><td style="color:var(--success-fg)">'+l.matched_records+'</td><td style="color:var(--danger-fg)">'+l.exception_records+'</td><td><strong>'+l.auto_match_rate+'%</strong></td></tr>').join('');
+  } catch(e){ showToast('Could not load history.','error'); }
+}
+
+function toggleTheme(){ const cur=document.documentElement.getAttribute('data-theme'); const next=cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',next); localStorage.setItem('vastu_theme',next); }
+const savedTheme=localStorage.getItem('vastu_theme'); if(savedTheme) document.documentElement.setAttribute('data-theme',savedTheme);
+
+let toastTimer;
+function showToast(msg,type='success'){ const t=document.getElementById('toast'); t.textContent=(type==='success'?'OK: ':'Error: ')+msg; t.className='toast '+type+' show'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),4000); }
+</script>
+</body>
+</html>
