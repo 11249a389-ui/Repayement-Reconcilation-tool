@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pathlib import Path
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "VASTU_HFC_RECONCILIATION_SECRET_KEY_2026")
 ALGORITHM = "HS256"
@@ -387,7 +388,6 @@ def health_check():
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
     }
 
-os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
